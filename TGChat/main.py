@@ -11,7 +11,10 @@ import random
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 # Инициализация лог-файла
+
 InitLogFile()
+
+
 
 # Токен бота
 TOKEN = subjection.bot_token

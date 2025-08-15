@@ -21,8 +21,10 @@ TOKEN = subjection.bot_token
 CountMessages = 0  # Инициализация счетчика сообщений
 WomanTypes = ["женщина", "Женщина", "она", "Она", "сестра", "Сестра"]
 Accounts = {"Name": "Global"}
+Status = {0: "Global"}
 Chats =[]
-
+admin_key = 1000
+access_key = 1000
 LoadData =[]
 
 ResetWait = ["none", "none"]
@@ -31,6 +33,7 @@ Wait = ResetWait
 
 links = {
     "tg_support_link" : "https://t.me/+SjLB0jLa9QZkYWEy",
+    "tg_chat_link" : "https://t.me/+FWpTqdLbfEtiNzQy",
     "yandexdisk_link" : "https://disk.yandex.ru/d/eYTLnyO3NBClQg",
     "serverip_link" : "178.75.82.168:25565",
     "serverversion_link" : "1.20.1 Fabric"
@@ -106,7 +109,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 /createaccount - создание аккаунта, привязка клана 
 /account - данные об аккаунте
-/addklan - привязать клан
+/addclan - привязать клан
 
 ---------------
 ''' + str(CountMessages) + ''' сообщений отправлено с момента включения бота!
@@ -122,23 +125,30 @@ async def all_command_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 /start - начать работу
 /help /h - справка
 /ac - все команды
+/info - о нас
 
-/translate - начать вывод сообщений
+/translate - начать вывод сообщений в чат майнкрафта
 /stoptranslate - остановить вывод
 
 /setup - установка версии
 /setlink - установка зависимостей
 /setupinstruction /inst - инструкция по установке версии
     
-/addklan - привязать клан
-/account - данные об аккаунте
 /createaccount - создание аккаунта, привязка клана
+/addclan - привязать клан
+/account - данные об аккаунте
 
 /saytochat - написать в чат от имени бота
 
-/addpatent - 
-/delpatent - 
-/patents - 
+/addpatent - добавить патент
+/delpatent - удалить патент
+/patents - все патенты
+
+/accesskey - ключ доступа
+/adminkey - ключ админа
+/admin - установка статуса
+
+/test - ткстовая команда
 
 /export - извлечение данных
 /import - установка данных
@@ -164,9 +174,13 @@ Tокен: ''' + subjection.bot_token + '''
     for key in links:
         help_text += f"\n[{key}] -> {links[key]}"
 
+    help_text += "\n\n---------------\nСтатусы: "
+    for key in Status:
+        help_text += f"\n[{str(key)}] -> {Status[key]}"
+
     keyboard = [[InlineKeyboardButton("Поддержка", url=links["tg_support_link"])]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    help_text = help_text.replace('-', '\\-').replace('>', '\\>').replace('[', '\\[').replace(']', '\\]').replace('.', '\\.').replace(':', '\\:').replace('+', '\\+').replace('_', '\\_')
+    help_text = help_text.replace('-', '\\-').replace('>', '\\>').replace('[', '\\[').replace(']', '\\]').replace('.', '\\.').replace(':', '\\:').replace('+', '\\+').replace('_', '\\_').replace('(', '\\(').replace(')', '\\)')
     await update.message.reply_text(text=help_text,
         reply_markup=reply_markup,
         parse_mode='MarkdownV2')
@@ -187,6 +201,40 @@ async def translate_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         PrintLogOut(f"Translate ON in chat '{chat_info['chat_title']}' ({chat_info['chat_title']})")
 
 
+
+
+
+async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global Wait
+    global admin_key
+    chat_info = await get_chat_info(update)
+    Wait = ["new_admin", chat_info['user_id']]
+    await update.message.reply_text("Введите ключ админа и статус")
+
+
+
+
+
+async def admin_key_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global admin_key
+    global Status
+    chat_info = await get_chat_info(update)
+    if chat_info['user_id'] in Status:
+        if Status[chat_info['user_id']] == "admin":
+                await update.message.reply_text(text="Ключ админа: ||"+str(admin_key)+"||",         
+        parse_mode='MarkdownV2')
+        else:
+            await update.message.reply_text("У вас нет доступа")
+async def access_key_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global access_key
+    global Status
+    chat_info = await get_chat_info(update)
+    if chat_info['user_id'] in Status:
+        if Status[chat_info['user_id']] == "admin":
+                await update.message.reply_text(text="Ключ доступа: ||"+str(access_key)+"||",         
+        parse_mode='MarkdownV2')
+        else:
+            await update.message.reply_text("У вас нет доступа")
 
 
 
@@ -232,6 +280,24 @@ async def setup_instruction_command(update: Update, context: ContextTypes.DEFAUL
 
 
 
+async def information_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_info = await get_chat_info(update)
+    markdown_text = f"""*Server Ksorty BOT*  ‖  *О нас*:
+════════════════════════════
+Наш сервер открыт каждой жопе
+Ссылка на наш чат: {links["tg_chat_link"]}
+""".replace('.', '\\.').replace('+', '\\+').replace('-', '\\-')
+    
+    keyboard = [[InlineKeyboardButton("Поддержка", url=links["tg_support_link"])]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(text=markdown_text,
+        reply_markup=reply_markup,
+        parse_mode='MarkdownV2')
+    # await update.message.reply_text(text = markdown_text, parse_mode='MarkdownV2')
+    PrintLogOut(f"Installation instruction request in chat '{chat_info['chat_title']}' ({chat_info['chat_id']})")
+
+
+
 
 async def stop_translate_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_info = await get_chat_info(update)
@@ -254,7 +320,7 @@ async def account_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not(user in Accounts):
             await update.message.reply_text("У вас еще нет аккаунта! Хотите его сделать? \n /createaccount")
         else:
-            text = '---Ваши данные---\nName: ' + user + '\nKlan: ' + Accounts[user]
+            text = '---Ваши данные---\nName: ' + user + '\nclan: ' + Accounts[user]
 
             await update.message.reply_text(text)
         
@@ -272,7 +338,7 @@ async def create_account_command(update: Update, context: ContextTypes.DEFAULT_T
         user = update.effective_user.first_name
         if not(user in Accounts):
             await update.message.reply_text("Вы добавлены в список! \nАккаунт создан.")
-            Accounts[str(user)] = "none_klan"
+            Accounts[str(user)] = "none_clan"
         else:
             await update.message.reply_text("У вас еуже есть аккаунт")
 
@@ -280,7 +346,7 @@ async def create_account_command(update: Update, context: ContextTypes.DEFAULT_T
         PrintLogOut(f"Ошибка: {e}")
         await update.message.reply_text("Ошибка")
 
-async def add_klan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def add_clan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global Accounts
     global Wait
     chat_info = await get_chat_info(update)
@@ -291,7 +357,7 @@ async def add_klan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Введите название своего клана.\n*Если он еще отсутствует в списках создание произойдет автоматически.")
             await update.message.reply_text("Текущий клан: " + Accounts[str(user)])
 
-            Wait = ["addklan", user]
+            Wait = ["addclan", user]
         else:
             await update.message.reply_text("У вас еще нет аккаунта")
 
@@ -299,18 +365,19 @@ async def add_klan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         PrintLogOut(f"Ошибка: {e}")
         await update.message.reply_text("Ошибка")
 
-def add_klan_input(update: Update, myname, myklan):
+def add_clan_input(update: Update, myname, myclan):
     global Accounts
     try:
-        Accounts[myname] = myklan
+        Accounts[myname] = myclan
     except Exception as e:
         PrintLogOut(f"Ошибка: {e}")
 
 
 
-def say_to_chat_input(update: Update, true_access_code, data_about_person, text):
+def say_to_chat_input(update: Update, data_about_person, text):
     global Accounts
     global Chats
+    global access_key
     answer = []
 
     data = text.split(':')
@@ -319,7 +386,7 @@ def say_to_chat_input(update: Update, true_access_code, data_about_person, text)
     access_code = int(data[2])
     message = data[3]
     try:
-        if access_code == true_access_code:
+        if access_code == access_key:
             text = f'''Server Ksorty BOT  ‖  Обращение:
 ════════════════════════════
 • {title}
@@ -331,6 +398,7 @@ def say_to_chat_input(update: Update, true_access_code, data_about_person, text)
  ''' + data_about_person
             answer.append(text)
             answer.append(Chats[id_chat])
+            access_key = random.randint(1000, 9999)
         else:
             answer.append("Ошибка прав доступа: неверный код доступа")
             answer.append(update)
@@ -350,6 +418,7 @@ def set_link_input(update: Update, text):
 def import_input(update: Update, text):
     global links
     global Accounts
+    global Status
     ans = 'Установка '
     data = text.split('_!_')    
     if data[1] == "links":
@@ -375,6 +444,39 @@ def import_input(update: Update, text):
             ans += "\nУспешно!"
         except Exception as e:
             ans += f"\nОшибка! \n{e}"
+    if data[1] == "status":
+        ans += "статусы:\n"
+        Status = {0 : "Global"}
+        try:
+            status_import = data[2].split('\n|')
+            for i in [item for item in status_import if item and str(item).strip()]:
+                key_val = i.split('->')
+                Status[int(key_val[0])] = key_val[1]
+                ans += f"set: {str(key_val)}\n"
+            ans += "\nУспешно!"
+        except Exception as e:
+            ans += f"\nОшибка! \n{e}"
+    return ans
+
+
+
+
+def admin_input(update: Update, text):
+    global Wait
+    global Status
+    global admin_key
+    text = text.split(":")
+    ans = "Установка статуса\n"
+    try:
+        input_key = int(text[0])
+        if input_key == admin_key:
+            Status[Wait[1]] = text[1]
+            ans += f"Добавлен статус {text[1]} пользователю {Wait[1]}"
+            admin_key = random.randint(1000, 9999)
+        else:
+            ans += f"Неверный ключ"
+    except Exception as e:
+        ans += f"\nОшибка! \n{e}"
     return ans
 
 
@@ -477,6 +579,7 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def export_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global links
     global Accounts
+    global Status
     chat_info = await get_chat_info(update)
     
     user = update.effective_user.first_name
@@ -490,6 +593,11 @@ async def export_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for i in Accounts:
         text_accounts += "\n|"+i+"->"+Accounts[i]
     await update.message.reply_text(text_accounts)
+
+    text_status = text + "_!_status_!_"
+    for i in Status:
+        text_status += "\n|"+str(i)+"->"+Status[i]
+    await update.message.reply_text(text_status)
 
 async def import_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global Wait
@@ -521,16 +629,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         log_entry = f"[{subjection.names[user.first_name]}]: {content}\n" 
         if (content[0] != ".") and (chat.title in subjection.active_chats):
             PrintLogOut(f"{log_entry[:100]}")
-            if Wait[0] == "addklan":
-                add_klan_input(update, Wait[1], content)
+            if Wait[0] == "addclan":
+                add_clan_input(update, Wait[1], content)
                 await update.message.reply_text("Клан " + content + " привязан!")
                 Wait = ResetWait
             if Wait[0] == "saytochat":
+                ok_status = ["admin", "sysadmin"]
                 try:
-                    data = say_to_chat_input(update, Wait[1], Wait[2], content)
-                    await data[1].message.reply_text(data[0])
+                    if (user.id in Status) and (Status[user.id] in ok_status): 
+                        data = say_to_chat_input(update, Wait[2], content)
+                        await data[1].message.reply_text(data[0])
+                    else:
+                        u_stat = ""
+                        if user.id in Status:
+                            u_stat = Status[user.id]
+                        else:
+                            u_stat = "-нет в системе-"
+                        await update.message.reply_text(f"У вас нет прав, необхтдимо иметь статус {str(ok_status)}\nВаш статус: {u_stat}")
+
                 except Exception as e:
-                    await update.message.reply_text(f"Ошибка: {e}")
+                    await update.message.reply_text(f"Ошибка_: {e}")
                 Wait = ResetWait
             if Wait[0] == "setlink":
                 try:
@@ -546,6 +664,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 except Exception as e:
                     await update.message.reply_text(f"Ошибка: {e}")
                 Wait = ResetWait 
+            if Wait[0] == "new_admin":
+                try:
+                    data = admin_input(update, content)
+                    await update.message.reply_text(data)
+                except Exception as e:
+                    await update.message.reply_text(f"Ошибка: {e}")
+                Wait = ResetWait 
+                
                 
 
         content = content.split()
@@ -610,6 +736,7 @@ def main():
         CommandHandler("help", help_command),
         CommandHandler("h", help_command),
         CommandHandler("ac", all_command_command),
+        CommandHandler("info", information_command),
         CommandHandler("translate", translate_command),
         CommandHandler("stoptranslate", stop_translate_command),
         CommandHandler("setup", setup_command),
@@ -617,7 +744,7 @@ def main():
         CommandHandler("inst", setup_instruction_command),
         CommandHandler("account", account_command),
         CommandHandler("createaccount", create_account_command),
-        CommandHandler("addklan", add_klan_command),
+        CommandHandler("addclan", add_clan_command),
         CommandHandler("saytochat", say_to_chat_command),
         CommandHandler("addpatent", add_patent_command),
         CommandHandler("delpatent", del_patent_command),
@@ -626,6 +753,9 @@ def main():
         CommandHandler("test", menu),
         CommandHandler("export", export_command),
         CommandHandler("import", import_command),
+        CommandHandler("admin", admin_command),
+        CommandHandler("adminkey", admin_key_command),
+        CommandHandler("accesskey", access_key_command),
         MessageHandler(filters.ALL, handle_message)
     ]
     

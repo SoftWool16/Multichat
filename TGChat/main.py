@@ -30,9 +30,9 @@ Wait = ResetWait
 
 
 links = {
-    "tg_support_link" : "https://поддержка",
+    "tg_support_link" : "https://t.me/+SjLB0jLa9QZkYWEy",
     "yandexdisk_link" : "https://disk.yandex.ru/d/eYTLnyO3NBClQg",
-    "serverip_link" : "https://адрес",
+    "serverip_link" : "178.75.82.168:25565",
     "serverversion_link" : "1.20.1 Fabric"
 }
 
@@ -127,19 +127,21 @@ async def all_command_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 /stoptranslate - остановить вывод
 
 /setup - установка версии
-
+/setlink - установка зависимостей
 /setupinstruction /inst - инструкция по установке версии
-
+    
 /addklan - привязать клан
 /account - данные об аккаунте
 /createaccount - создание аккаунта, привязка клана
 
 /saytochat - написать в чат от имени бота
 
-/addpatent - написать в чат от имени бота
-/delpatent - написать в чат от имени бота
-/patents - написать в чат от имени бота
+/addpatent - 
+/delpatent - 
+/patents - 
 
+/export - извлечение данных
+/import - установка данных
 ---------------
 Ключевые слова:
  - Уиа
@@ -153,7 +155,22 @@ Tокен: ''' + subjection.bot_token + '''
 Аккаунты: '''
     for k in Accounts:
         help_text += "\n " + k + " : " + Accounts[k]
-    await update.message.reply_text(help_text)
+
+    help_text += "\n\n---------------\nЧаты: "
+    for i in range(0, len(Chats)):
+        help_text += '\n [' + str(i) + '] - '+ str(Chats[i].effective_chat.title)
+
+    help_text += "\n\n---------------\nЗависимости: "
+    for key in links:
+        help_text += f"\n[{key}] -> {links[key]}"
+
+    keyboard = [[InlineKeyboardButton("Поддержка", url=links["tg_support_link"])]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    help_text = help_text.replace('-', '\\-').replace('>', '\\>').replace('[', '\\[').replace(']', '\\]').replace('.', '\\.').replace(':', '\\:').replace('+', '\\+').replace('_', '\\_')
+    await update.message.reply_text(text=help_text,
+        reply_markup=reply_markup,
+        parse_mode='MarkdownV2')
+
 
 
 
@@ -179,17 +196,19 @@ async def setup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     markdown_text = f"""
 *Server Ksorty BOT*  ‖  *Сборка*::
 ════════════════════════════
-• *Сервер::* IP {links["serverip_link"]}
+• *IP::* `{links["serverip_link"]}`
 • *Версия::* `{links["serverversion_link"]}`
 • *Сборка::* [Скачать]({links["yandexdisk_link"]})
 ════════════════════════════
-• /inst \\- инструкция по установке
-════════════════════════════
-*Написать в поддержку::* (({links["tg_support_link"]}))
-""".replace('.', '\\.').replace('::', '\\:').replace('((', '\\(').replace('))', '\\)')
+• /inst - инструкция по установке
+""".replace('.', '\\.').replace('::', '\\:').replace('((', '\\(').replace('))', '\\)').replace('+', '\\+').replace('-', '\\-')
 # .replace('[', '\\[').replace(']', '\\]')
-
-    await update.message.reply_text(text = markdown_text, parse_mode='MarkdownV2')
+    keyboard = [[InlineKeyboardButton("Поддержка", url=links["tg_support_link"])]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(text=markdown_text,
+        reply_markup=reply_markup,
+        parse_mode='MarkdownV2')
+    # await update.message.reply_text(text = markdown_text, parse_mode='MarkdownV2')
     PrintLogOut(f"Installation request in chat '{chat_info['chat_title']}' ({chat_info['chat_title']})")
 
 
@@ -198,13 +217,17 @@ async def setup_instruction_command(update: Update, context: ContextTypes.DEFAUL
     chat_info = await get_chat_info(update)
     markdown_text = f"""*Server Ksorty BOT*  ‖  *Сборка*:
 ════════════════════════════
-• Скачать сборку \\- /setup
+• Скачать сборку - /setup
 • Все файлы в архиве переместить в .minecraft
 • Запустить версию {links["serverversion_link"]}
-════════════════════════════
-Написать в поддержку: {links["tg_support_link"]}
-""".replace('.', '\\.')
-    await update.message.reply_text(text = markdown_text, parse_mode='MarkdownV2')
+""".replace('.', '\\.').replace('+', '\\+').replace('-', '\\-')
+    
+    keyboard = [[InlineKeyboardButton("Поддержка", url=links["tg_support_link"])]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(text=markdown_text,
+        reply_markup=reply_markup,
+        parse_mode='MarkdownV2')
+    # await update.message.reply_text(text = markdown_text, parse_mode='MarkdownV2')
     PrintLogOut(f"Installation instruction request in chat '{chat_info['chat_title']}' ({chat_info['chat_id']})")
 
 
@@ -315,6 +338,44 @@ def say_to_chat_input(update: Update, true_access_code, data_about_person, text)
     except Exception as e:
         PrintLogOut(f"Ошибка: {e}")
 
+def set_link_input(update: Update, text):
+    data = text.split('->')
+    if data[0] in links:
+        links[data[0]] = data[1]
+        answer = f"Установлена зависимость [{data[0]}] -> {data[1]}"
+    else:
+        answer = f"Ошибка! Не существует зависимости \"{data[0]}\""
+    return answer
+
+def import_input(update: Update, text):
+    global links
+    global Accounts
+    ans = 'Установка '
+    data = text.split('_!_')    
+    if data[1] == "links":
+        ans += "ссылок:\n"
+        try:
+            links_import = data[2].split('\n|')
+            for i in [item for item in links_import if item and str(item).strip()]:
+                key_val = i.split('->')
+                links[key_val[0]] = key_val[1]
+                ans += f"set: {str(key_val)}\n"
+            ans += "\nУспешно!"
+        except Exception as e:
+            ans += f"\nОшибка! \n{e}"
+    if data[1] == "accounts":
+        ans += "аккаунты:\n"
+        Accounts = {"Name": "Global"}
+        try:
+            accounts_import = data[2].split('\n|')
+            for i in [item for item in accounts_import if item and str(item).strip()]:
+                key_val = i.split('->')
+                Accounts[key_val[0]] = key_val[1]
+                ans += f"set: {str(key_val)}\n"
+            ans += "\nУспешно!"
+        except Exception as e:
+            ans += f"\nОшибка! \n{e}"
+    return ans
 
 
 
@@ -331,9 +392,9 @@ async def say_to_chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 Введите /start для открытия доступа к этому чату.
                                     
 Для отправки сообщения от имени бота в чат введите его слеудющим образом:
-==============================================                                  
-| id_чата : подпись : код_доступа : сообщение|
-==============================================''')
+                                  
+<id_чата> : <подпись> : <код_доступа> : <сообщение>
+''')
     access_code = 1000
     Wait = ['saytochat', access_code, user]
     text = "--- chats ---"
@@ -346,7 +407,6 @@ async def say_to_chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 
 async def add_patent_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global Accounts
     chat_info = await get_chat_info(update)
     
     user = update.effective_user.first_name
@@ -356,7 +416,6 @@ async def add_patent_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def del_patent_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global Accounts
     chat_info = await get_chat_info(update)
     
     user = update.effective_user.first_name
@@ -366,7 +425,6 @@ async def del_patent_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def patents_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global Accounts
     chat_info = await get_chat_info(update)
     
     user = update.effective_user.first_name
@@ -376,12 +434,18 @@ async def patents_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def set_link_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global Accounts
+    global Wait
     chat_info = await get_chat_info(update)
     
     user = update.effective_user.first_name
-    # text
-    await update.message.reply_text("Ошибка! \nДанная команда еще не поддерживается")
+    text = '''Установите зависимости в боте!
+
+Текущие зависимости: '''
+    for key in links:
+        text += f"\n[{key}] -> {links[key]}"
+    text += "\n\nВведите данные в формате <зависимость>-><ссылка>"
+    await update.message.reply_text(text)
+    Wait = ["setlink"]
 
 
 
@@ -410,7 +474,29 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def export_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global links
+    global Accounts
+    chat_info = await get_chat_info(update)
+    
+    user = update.effective_user.first_name
+    text = "_extracted_data"
+    text_links = text + "_!_links_!_"
+    for i in links:
+        text_links += "\n|"+i+"->"+links[i]
+    await update.message.reply_text(text_links)
 
+    text_accounts = text + "_!_accounts_!_"
+    for i in Accounts:
+        text_accounts += "\n|"+i+"->"+Accounts[i]
+    await update.message.reply_text(text_accounts)
+
+async def import_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global Wait
+    chat_info = await get_chat_info(update)
+    user = update.effective_user.first_name
+    Wait = ["import_data"]
+    await update.message.reply_text("Введите сообщение для установки данных")
 
 
 
@@ -445,8 +531,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await data[1].message.reply_text(data[0])
                 except Exception as e:
                     await update.message.reply_text(f"Ошибка: {e}")
-                    Wait = ResetWait
-
+                Wait = ResetWait
+            if Wait[0] == "setlink":
+                try:
+                    data = set_link_input(update, content)
+                    await update.message.reply_text(data)
+                except Exception as e:
+                    await update.message.reply_text(f"Ошибка: {e}")
+                Wait = ResetWait
+            if Wait[0] == "import_data":
+                try:
+                    data = import_input(update, content)
+                    await update.message.reply_text(data)
+                except Exception as e:
+                    await update.message.reply_text(f"Ошибка: {e}")
+                Wait = ResetWait 
                 
 
         content = content.split()
@@ -525,6 +624,8 @@ def main():
         CommandHandler("patents", patents_command),
         CommandHandler("setlink", set_link_command),
         CommandHandler("test", menu),
+        CommandHandler("export", export_command),
+        CommandHandler("import", import_command),
         MessageHandler(filters.ALL, handle_message)
     ]
     

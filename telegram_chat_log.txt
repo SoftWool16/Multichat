@@ -1,1 +1,3 @@
-[sanity]: Справедливо
+[sanity]: _extracted_data_!_accounts_!_
+|Name->Global
+|Александр->феникс
